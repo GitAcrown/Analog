@@ -739,8 +739,9 @@ class Economy(commands.Cog):
             return await interaction.response.send_message('**Erreur** · Vous devez mentionner un membre actuellement présent sur le serveur', ephemeral=True)
         
         account = self.get_account(user)
-        trs = account.reset()
-        await interaction.response.send_message(f"**Solde réinitialisé** · Le solde de {user.mention} a été réinitialisé à **{trs.display_amount}**")
+        account.reset()
+        default_balance = int(self.get_guild_config(user.guild)['DefaultBalance'])
+        await interaction.response.send_message(f"**Solde réinitialisé** · Le solde de {user.mention} a été réinitialisé à **{default_balance} {self.get_currency(user.guild)}**")
         
     @config_commands.command(name='setbalance')
     @app_commands.rename(user='utilisateur', amount='montant')
@@ -754,8 +755,8 @@ class Economy(commands.Cog):
             return await interaction.response.send_message('**Erreur** · Vous devez mentionner un membre actuellement présent sur le serveur', ephemeral=True)
         
         account = self.get_account(user)
-        trs = account.set(amount)
-        await interaction.response.send_message(f"**Solde modifié** · Le solde de {user.mention} a été modifié à **{trs.display_amount}**")
+        account.set(amount)
+        await interaction.response.send_message(f"**Solde modifié** · Le solde de {user.mention} a été modifié à **{amount} {self.get_currency(user.guild)}**")
         
     @config_commands.command(name='cancel')
     async def _configbank_cancel(self, interaction: discord.Interaction, transaction_id: str):

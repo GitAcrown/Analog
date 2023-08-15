@@ -265,12 +265,12 @@ class Account:
     
 class Transaction:
     """Represente une transaction économique"""
-    def __init__(self, cog: 'Economy', user: discord.Member, amount: int, *, reason: str = 'Non précisée', timestamp: float = 0):
+    def __init__(self, cog: 'Economy', user: discord.Member, amount: int, *, reason: str = '', timestamp: float = 0):
         self.__cog = cog
         self.user = user
         self.guild = user.guild
         self.amount = amount
-        self.reason = reason
+        self.reason = reason or 'Non précisée'
         self.timestamp = timestamp or datetime.now().timestamp()
         
         self.id = self.__get_id()

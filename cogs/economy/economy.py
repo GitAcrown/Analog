@@ -185,7 +185,7 @@ class Account:
     @property
     def display_balance(self) -> str:
         """Retourne une représentation textuelle du solde du compte avec le symbole de la monnaie du serveur"""
-        return f'{self.balance} {self.__cog.get_currency(self.guild)}'
+        return f'{self.balance}{self.__cog.get_currency(self.guild)}'
 
     def set(self, value: int, *, reason: str = '') -> 'Transaction':
         """Modifie le solde du compte"""
@@ -356,7 +356,7 @@ class Transaction:
     @property
     def display_amount(self) -> str:
         """Retourne une représentation textuelle du montant de la transaction avec le symbole de la monnaie du serveur"""
-        return f'{self.amount} {self.__cog.get_currency(self.guild)}'
+        return f'{self.amount}{self.__cog.get_currency(self.guild)}'
     
     @property
     def embed(self) -> discord.Embed:
@@ -669,7 +669,7 @@ class Economy(commands.Cog):
             return await interaction.response.send_message("**Erreur** · Vous avez déjà récupéré votre aide quotidienne aujourd'hui, réessayez demain.", ephemeral=True)
         
         if account.balance >= dailylimit:
-            return await interaction.response.send_message(f"**Erreur** · Vous avez déjà atteint la limite maximale donnant droit à l'aide quotidienne ({config['DailyLimit']} {config['Currency']})", ephemeral=True)
+            return await interaction.response.send_message(f"**Erreur** · Vous avez déjà atteint la limite maximale donnant droit à l'aide quotidienne ({config['DailyLimit']}{config['Currency']})", ephemeral=True)
         
         if dailyamount <= 0:
             return await interaction.response.send_message("**Solde trop élevé** · L'aide qu'il vous reste à percevoir est inférieure à un crédit", ephemeral=True)
@@ -699,7 +699,7 @@ class Economy(commands.Cog):
         em = discord.Embed(title=f"Leaderboard · ***{guild.name}***", description=txt, color=0x2b2d31)
         if user not in [a.owner for a in top]:
             em.add_field(name="Votre rang", value=pretty.codeblock(f'#{self.get_account_rank(self.get_account(user))}'))
-        em.set_footer(text=f"Total sur le serveur · {self.get_guild_total_balance(guild)} {self.get_currency(guild)}")
+        em.set_footer(text=f"Total sur le serveur · {self.get_guild_total_balance(guild)}{self.get_currency(guild)}")
         await interaction.response.send_message(embed=em)
         
     @app_commands.command(name='stats')
@@ -716,11 +716,11 @@ class Economy(commands.Cog):
         
         em = discord.Embed(title=f"Statistiques de l'économie · ***{guild.name}***", color=0x2b2d31)
         richest = self.get_accounts_by_balance(guild)[0]
-        em.add_field(name="Plus riche", value=pretty.codeblock(f"{richest.owner.name} · {richest.balance} {currency}"))
-        em.add_field(name="Moyenne", value=pretty.codeblock(str(self.get_guild_average_balance(guild)) + f' {currency}'))
-        em.add_field(name="Médiane", value=pretty.codeblock(str(self.get_guild_median_balance(guild)) + f' {currency}'))
+        em.add_field(name="Plus riche", value=pretty.codeblock(f"{richest.owner.name} · {richest.balance}{currency}"))
+        em.add_field(name="Moyenne", value=pretty.codeblock(str(self.get_guild_average_balance(guild)) + f'{currency}'))
+        em.add_field(name="Médiane", value=pretty.codeblock(str(self.get_guild_median_balance(guild)) + f'{currency}'))
         em.add_field(name="Variation s/ 24h", value=pretty.codeblock(f'{global_variation:+}', lang='diff'))
-        em.add_field(name="Total en circulation", value=pretty.codeblock(str(self.get_guild_total_balance(guild)) + f' {currency}'))
+        em.add_field(name="Total en circulation", value=pretty.codeblock(str(self.get_guild_total_balance(guild)) + f'{currency}'))
         await interaction.response.send_message(embed=em)
     
     # Commandes d'administration -----------------------------------------------    
@@ -740,7 +740,7 @@ class Economy(commands.Cog):
         account = self.get_account(user)
         account.reset()
         default_balance = int(self.get_guild_config(user.guild)['DefaultBalance'])
-        await interaction.response.send_message(f"**Solde réinitialisé** · Le solde de {user.mention} a été réinitialisé à **{default_balance} {self.get_currency(user.guild)}**")
+        await interaction.response.send_message(f"**Solde réinitialisé** · Le solde de {user.mention} a été réinitialisé à **{default_balance}{self.get_currency(user.guild)}**")
         
     @config_commands.command(name='setbalance')
     @app_commands.rename(user='utilisateur', amount='montant')
@@ -755,7 +755,7 @@ class Economy(commands.Cog):
         
         account = self.get_account(user)
         account.set(amount, reason=f"Modification du solde par {interaction.user.display_name}")
-        await interaction.response.send_message(f"**Solde modifié** · Le solde de {user.mention} a été modifié à **{amount} {self.get_currency(user.guild)}**")
+        await interaction.response.send_message(f"**Solde modifié** · Le solde de {user.mention} a été modifié à **{amount}{self.get_currency(user.guild)}**")
         
     @config_commands.command(name='cancel')
     async def _configbank_cancel(self, interaction: discord.Interaction, transaction_id: str):
@@ -805,6 +805,9 @@ class Economy(commands.Cog):
         if not currency.isprintable() or currency.isspace():
             return await interaction.response.send_message('**Erreur** · Le symbole de la monnaie doit être un caractère unicode non-vide et imprimable', ephemeral=True)
         
+        if len(currency) > 3:
+            return await interaction.response.send_message('**Erreur** · Le symbole de la monnaie ne peut pas dépasser 3 caractères', ephemeral=True)
+        
         self.set_guild_config(guild, 'Currency', currency)
         await interaction.response.send_message(f"**Paramètre modifié** · Le symbole de la monnaie a été modifié pour `{currency}`")
         
@@ -825,7 +828,7 @@ class Economy(commands.Cog):
         if amount == 0 or limit == 0:
             await interaction.response.send_message(f"**Paramètres modifiés** · L'aide économique quotidienne a été désactivée")
         else:
-            await interaction.response.send_message(f"**Paramètres modifiés** · L'aide économique quotidienne a été modifiée pour `{amount} {self.get_currency(guild)}` avec une limite de `{limit} {self.get_currency(guild)}`")
+            await interaction.response.send_message(f"**Paramètres modifiés** · L'aide économique quotidienne a été modifiée pour `{amount}{self.get_currency(guild)}` avec une limite de `{limit}{self.get_currency(guild)}`")
     
     @config_commands.command(name='defaultbalance')
     @app_commands.rename(amount='montant')
@@ -839,7 +842,7 @@ class Economy(commands.Cog):
             return await interaction.response.send_message('**Erreur** · Vous devez être présent sur le serveur', ephemeral=True)
         
         self.set_guild_config(guild, 'DefaultBalance', amount)
-        await interaction.response.send_message(f"**Paramètre modifié** · Le solde par défaut a été modifié pour `{amount} {self.get_currency(guild)}`")
+        await interaction.response.send_message(f"**Paramètre modifié** · Le solde par défaut a été modifié pour `{amount}{self.get_currency(guild)}`")
     
 async def setup(bot):
     cog = Economy(bot)

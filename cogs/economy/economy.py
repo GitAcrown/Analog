@@ -799,7 +799,7 @@ class Economy(commands.Cog):
             return await interaction.response.send_message('**Erreur** · Vous devez être présent sur le serveur', ephemeral=True)
         
         # On vérifie que le symbole soit valide (unicode)
-        if not currency.isprintable() or not currency.isspace():
+        if not currency.isprintable() or currency.isspace():
             return await interaction.response.send_message('**Erreur** · Le symbole de la monnaie doit être un caractère unicode non-vide et imprimable', ephemeral=True)
         
         self.set_guild_config(guild, 'Currency', currency)
@@ -819,7 +819,10 @@ class Economy(commands.Cog):
         
         self.set_guild_config(guild, 'DailyAmount', amount)
         self.set_guild_config(guild, 'DailyLimit', limit)
-        await interaction.response.send_message(f"**Paramètres modifiés** · L'aide économique quotidienne a été modifiée pour `{amount} {self.get_currency(guild)}` avec une limite de `{limit} {self.get_currency(guild)}`")
+        if amount == 0 or limit == 0:
+            await interaction.response.send_message(f"**Paramètres modifiés** · L'aide économique quotidienne a été désactivée")
+        else:
+            await interaction.response.send_message(f"**Paramètres modifiés** · L'aide économique quotidienne a été modifiée pour `{amount} {self.get_currency(guild)}` avec une limite de `{limit} {self.get_currency(guild)}`")
     
     @config_commands.command(name='defaultbalance')
     @app_commands.rename(amount='montant')

@@ -34,7 +34,7 @@ class TransactionsHistoryView(discord.ui.View):
         self.initial_interaction = interaction
         self.account = account
         
-        self.transactions : List[Transaction] = account.get_transactions()
+        self.transactions : List['Transaction'] = account.get_transactions()
         self.current_page = 0
         self.display_type = 'reason'
         self.pages : List[discord.Embed] = self.get_pages(self.display_type)
@@ -248,7 +248,7 @@ class Account:
     def embed(self) -> discord.Embed:
         """Retourne une embed d'information sur le compte"""
         em = discord.Embed(title=f"Compte Bancaire · *{self.owner.display_name}*", color=0x2b2d31)
-        em.add_field(name="Solde", value=pretty.codeblock(str(self.__int__())))
+        em.add_field(name="Solde", value=pretty.codeblock(self.display_balance))
 
         balancevar = self.balance_variation(datetime.now() - timedelta(hours=24))
         em.add_field(name="Var. 24h", value=pretty.codeblock(f'{balancevar:+}', lang='diff'))

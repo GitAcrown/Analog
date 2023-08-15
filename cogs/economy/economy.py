@@ -1,8 +1,7 @@
 import json
 import logging
 from datetime import datetime, timedelta
-from re import L
-from typing import Any, Callable, Dict, List, Literal, Optional
+from typing import Any, Callable, Dict, List, Literal
 
 import discord
 from discord import app_commands
@@ -755,7 +754,7 @@ class Economy(commands.Cog):
             return await interaction.response.send_message('**Erreur** · Vous devez mentionner un membre actuellement présent sur le serveur', ephemeral=True)
         
         account = self.get_account(user)
-        account.set(amount)
+        account.set(amount, reason=f"Modification du solde par {interaction.user.display_name}")
         await interaction.response.send_message(f"**Solde modifié** · Le solde de {user.mention} a été modifié à **{amount} {self.get_currency(user.guild)}**")
         
     @config_commands.command(name='cancel')

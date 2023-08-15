@@ -493,11 +493,11 @@ class Economy(commands.Cog):
     
     def set_guild_config(self, guild: discord.Guild, key: str, value: Any) -> None:
         """Modifie la valeur d'un paramètre de configuration"""
-        self.data.execute(guild, "INSERT OR REPLACE INTO config VALUES (?, ?)", (key, json.dumps(value)))
+        self.data.execute(guild, "INSERT OR REPLACE INTO config VALUES (?, ?)", (key, value))
     
     def get_currency(self, guild: discord.Guild) -> str:
         """Renvoie le symbole de la monnaie"""
-        return self.get_guild_config(guild)['Currency']
+        return str(self.get_guild_config(guild)['Currency'])
     
     # Accounts -----------------------------------------------------------------
     

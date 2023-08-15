@@ -251,7 +251,7 @@ class Account:
         em.add_field(name="Solde", value=pretty.codeblock(self.display_balance))
 
         balancevar = self.balance_variation(datetime.now() - timedelta(hours=24))
-        em.add_field(name="Var. 24h", value=pretty.codeblock(f'{balancevar:+}', lang='diff'))
+        em.add_field(name="Var. s/ 24h", value=pretty.codeblock(f'{balancevar:+}', lang='diff'))
         
         rank = self.__cog.get_account_rank(self)
         em.add_field(name="Rang", value=pretty.codeblock(f'#{rank}'))
@@ -639,7 +639,7 @@ class Economy(commands.Cog):
         giver.withdraw(amount, reason=f'Don à {user.display_name} > {reason}' if reason else f'Don à {user.display_name}')
         trs = receiver.deposit(amount, reason=f'Don de {interaction.user.display_name} > {reason}' if reason else f'Don de {interaction.user.display_name}')
 
-        await interaction.response.send_message(f'**Transfert effectué** · **{trs.display_amount}** ont été envoyés à {user.mention} > `{reason}`' if reason else f'**Transfert effectué** · **{trs.display_amount}** ont été envoyés à {user.mention}')
+        await interaction.response.send_message(f'**Transfert effectué** · **{trs.display_amount}** ont été envoyés à {user.mention} : `{reason}`' if reason else f'**Transfert effectué** · **{trs.display_amount}** ont été envoyés à {user.mention}')
     
     # Commandes globales -------------------------------------------------------
     
@@ -671,6 +671,9 @@ class Economy(commands.Cog):
         
         if account.balance >= dailylimit:
             return await interaction.response.send_message(f"**Erreur** · Vous avez déjà atteint la limite maximale donnant droit à l'aide quotidienne ({config['DailyLimit']} {config['Currency']})", ephemeral=True)
+        
+        if dailyamount <= 0:
+            return await interaction.response.send_message("**Solde trop élevé** · L'aide qu'il vous reste à percevoir est inférieure à un crédit", ephemeral=True)
         
         trs = account.deposit(dailyamount, reason=f'Aide quotidienne du {today}')
         cond.value = today
@@ -717,8 +720,8 @@ class Economy(commands.Cog):
         em.add_field(name="Plus riche", value=pretty.codeblock(f"{richest.owner.name} · {richest.balance} {currency}"))
         em.add_field(name="Moyenne", value=pretty.codeblock(str(self.get_guild_average_balance(guild)) + f' {currency}'))
         em.add_field(name="Médiane", value=pretty.codeblock(str(self.get_guild_median_balance(guild)) + f' {currency}'))
-        em.add_field(name="Var. sur 24h", value=pretty.codeblock(f'{global_variation:+}', lang='diff'))
-        em.add_field(name="Total", value=pretty.codeblock(str(self.get_guild_total_balance(guild)) + f' {currency}'))
+        em.add_field(name="Variation s/ 24h", value=pretty.codeblock(f'{global_variation:+}', lang='diff'))
+        em.add_field(name="Total en circulation", value=pretty.codeblock(str(self.get_guild_total_balance(guild)) + f' {currency}'))
         await interaction.response.send_message(embed=em)
     
     # Commandes d'administration -----------------------------------------------    

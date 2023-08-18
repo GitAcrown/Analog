@@ -19,6 +19,7 @@ DEFAULT_CONFIG = {
     'Currency': '✦',
     'DailyAmount': 200,
     'DailyLimit': 5000,
+    'PremiumDailyAmount': 100,
     'DefaultBalance':  100
 }
 
@@ -79,7 +80,7 @@ class TransactionsHistoryView(discord.ui.View):
         if self.pages:
             await self.initial_interaction.response.send_message(embed=self.pages[self.current_page], view=self)
         else:
-            await self.initial_interaction.response.send_message("**Erreur** · Cet historique de transactions est vide.")
+            await self.initial_interaction.response.send_message("**Vide** · Cet historique de transactions est vide.")
             self.stop()
             return self.clear_items()
         self.message = await self.initial_interaction.original_response()
@@ -583,7 +584,7 @@ class Economy(commands.Cog):
         """
         member = user or interaction.user
         if not isinstance(member, discord.Member):
-            return await interaction.response.send_message('**Erreur** · Vous devez mentionner un membre actuellement présent sur le serveur', ephemeral=True)
+            return await interaction.response.send_message('**Membre inconnu** · Vous devez mentionner un membre actuellement présent sur le serveur', ephemeral=True)
         
         account = self.get_account(member)
         await interaction.response.send_message(embed=account.embed)
@@ -605,7 +606,7 @@ class Economy(commands.Cog):
         """
         member = user or interaction.user
         if not isinstance(member, discord.Member):
-            return await interaction.response.send_message('**Erreur** · Vous devez mentionner un membre actuellement présent sur le serveur', ephemeral=True)
+            return await interaction.response.send_message('**Membre inconnu** · Vous devez mentionner un membre actuellement présent sur le serveur', ephemeral=True)
         
         account = self.get_account(member)
         view = TransactionsHistoryView(interaction, account)
@@ -621,19 +622,19 @@ class Economy(commands.Cog):
         :param reason: Raison du don (facultatif)
         """
         if amount < 0:
-            return await interaction.response.send_message('**Erreur** · Le montant ne peut pas être négatif', ephemeral=True)
+            return await interaction.response.send_message('**Valeur invalide** · Le montant ne peut pas être négatif', ephemeral=True)
         
         if not isinstance(user, discord.Member):
-            return await interaction.response.send_message('**Erreur** · Vous devez mentionner un membre actuellement présent sur le serveur', ephemeral=True)
+            return await interaction.response.send_message('**Membre inconnu** · Vous devez mentionner un membre actuellement présent sur le serveur', ephemeral=True)
         if not isinstance(interaction.user, discord.Member):
-            return await interaction.response.send_message('**Erreur** · Vous devez être présent sur le serveur', ephemeral=True)
+            return await interaction.response.send_message('**Membre inconnu** · Vous devez être présent sur le serveur', ephemeral=True)
     
         giver = self.get_account(interaction.user)
         receiver = self.get_account(user)
         if giver == receiver:
-            return await interaction.response.send_message('**Erreur** · Vous ne pouvez pas vous donner de l\'argent à vous-même', ephemeral=True)
+            return await interaction.response.send_message('**Membres identiques** · Vous ne pouvez pas vous donner de l\'argent à vous-même', ephemeral=True)
         if giver.balance < amount:
-            return await interaction.response.send_message('**Erreur** · Vous n\'avez pas assez d\'argent', ephemeral=True)
+            return await interaction.response.send_message('**Solde insuffisant** · Vous n\'avez pas assez d\'argent', ephemeral=True)
         
         giver.withdraw(amount, reason=f'Don à {user.display_name} > {reason}' if reason else f'Don à {user.display_name}')
         trs = receiver.deposit(amount, reason=f'Don de {interaction.user.display_name} > {reason}' if reason else f'Don de {interaction.user.display_name}')
@@ -648,7 +649,7 @@ class Economy(commands.Cog):
         """Récupérer votre aide économique quotidienne"""
         user = interaction.user
         if not isinstance(user, discord.Member):
-            return await interaction.response.send_message('**Erreur** · Vous devez être présent sur le serveur', ephemeral=True)
+            return await interaction.response.send_message('**Membre inconnu** · Vous devez être présent sur le serveur', ephemeral=True)
         
         account = self.get_account(user)
         today = datetime.now().strftime('%d.%m.%Y')
@@ -656,8 +657,14 @@ class Economy(commands.Cog):
         
         dailyamount = int(config['DailyAmount'])
         dailylimit = int(config['DailyLimit'])
+        premiumamount = int(config['PremiumDailyAmount'])
+        
+        is_premium = user.premium_since is not None
+        if is_premium:
+            dailyamount += premiumamount
+        
         if dailyamount <= 0 or dailylimit <= 0:
-            return await interaction.response.send_message("**Erreur** · L'aide économique quotidienne n'est pas disponible sur ce serveur", ephemeral=True)
+            return await interaction.response.send_message("**Aide désactivée** · L'aide économique quotidienne n'est pas disponible sur ce serveur", ephemeral=True)
         
         ignore_part = 0.1 * dailylimit # On ignore l'équivallent de 10% de la limite quotidienne dans le calcul de la réduction
         if account.balance > ignore_part:
@@ -666,16 +673,18 @@ class Economy(commands.Cog):
         
         cond = Condition(self, 'LastDaily', user, default_value='')
         if cond.check(lambda v: v == today):
-            return await interaction.response.send_message("**Erreur** · Vous avez déjà récupéré votre aide quotidienne aujourd'hui, réessayez demain.", ephemeral=True)
+            return await interaction.response.send_message("**Déjà perçue** · Vous avez déjà récupéré votre aide quotidienne aujourd'hui, réessayez demain.", ephemeral=True)
         
         if account.balance >= dailylimit:
-            return await interaction.response.send_message(f"**Erreur** · Vous avez déjà atteint la limite maximale donnant droit à l'aide quotidienne ({config['DailyLimit']}{config['Currency']})", ephemeral=True)
+            return await interaction.response.send_message(f"**Solde maximal atteint** · Vous avez déjà atteint la limite maximale donnant droit à l'aide quotidienne ({config['DailyLimit']}{config['Currency']})", ephemeral=True)
         
         if dailyamount <= 0:
             return await interaction.response.send_message("**Solde trop élevé** · L'aide qu'il vous reste à percevoir est inférieure à un crédit", ephemeral=True)
         
         trs = account.deposit(dailyamount, reason=f'Aide quotidienne du {today}')
         cond.value = today
+        if is_premium:
+            return await interaction.response.send_message(f"**Aide quotidienne récupérée** · **{trs.display_amount}** ont été ajoutés à votre compte au titre de l'aide économique quotidienn (majorée car vous boostez ce serveur)")
         await interaction.response.send_message(f"**Aide quotidienne récupérée** · **{trs.display_amount}** ont été ajoutés à votre compte au titre de l'aide économique quotidienne")
     
     @app_commands.command(name='leaderboard')
@@ -684,15 +693,15 @@ class Economy(commands.Cog):
         """Affiche un top 20 des comptes bancaires du serveur"""
         guild = interaction.guild
         if not isinstance(guild, discord.Guild):
-            return await interaction.response.send_message('**Erreur** · Vous devez être présent sur le serveur', ephemeral=True)
+            return await interaction.response.send_message('**Membre inconnu** · Vous devez être présent sur le serveur', ephemeral=True)
         
         accounts = self.get_accounts_by_balance(guild)
         if not accounts:
-            return await interaction.response.send_message("**Erreur** · Aucun compte bancaire n'a été ouvert sur ce serveur")
+            return await interaction.response.send_message("**Aucun compte** · Aucun compte bancaire n'a été ouvert sur ce serveur")
         
         user = interaction.user
         if not isinstance(user, discord.Member):
-            return await interaction.response.send_message('**Erreur** · Vous devez être présent sur le serveur', ephemeral=True)
+            return await interaction.response.send_message('**Membre inconnu** · Vous devez être présent sur le serveur', ephemeral=True)
         
         top = accounts[:20]
         txt = '\n'.join([f'{i+1}. {a.owner.mention} · **{a.display_balance}**' for i, a in enumerate(top)])
@@ -708,7 +717,7 @@ class Economy(commands.Cog):
         """Affiche diverses statistiques sur l'économie du serveur"""
         guild = interaction.guild
         if not isinstance(guild, discord.Guild):
-            return await interaction.response.send_message('**Erreur** · Vous devez être présent sur le serveur', ephemeral=True)
+            return await interaction.response.send_message('**Membre inconnu** · Vous devez être présent sur le serveur', ephemeral=True)
         
         global_variation = self.get_transactions_since(guild, datetime.now() - timedelta(hours=24))
         global_variation = sum([t.amount for t in global_variation])
@@ -735,7 +744,7 @@ class Economy(commands.Cog):
         :param user: Utilisateur dont on veut réinitialiser le solde
         """
         if not isinstance(user, discord.Member):
-            return await interaction.response.send_message('**Erreur** · Vous devez mentionner un membre actuellement présent sur le serveur', ephemeral=True)
+            return await interaction.response.send_message('**Membre inconnu** · Vous devez mentionner un membre actuellement présent sur le serveur', ephemeral=True)
         
         account = self.get_account(user)
         account.reset()
@@ -751,7 +760,7 @@ class Economy(commands.Cog):
         :param amount: Nouveau solde à attribuer
         """
         if not isinstance(user, discord.Member):
-            return await interaction.response.send_message('**Erreur** · Vous devez mentionner un membre actuellement présent sur le serveur', ephemeral=True)
+            return await interaction.response.send_message('**Membre inconnu** · Vous devez mentionner un membre actuellement présent sur le serveur', ephemeral=True)
         
         account = self.get_account(user)
         account.set(amount, reason=f"Modification du solde par {interaction.user.display_name}")
@@ -764,11 +773,11 @@ class Economy(commands.Cog):
         :param transaction_id: Identifiant de la transaction
         """
         if not isinstance(interaction.guild, discord.Guild):
-            return await interaction.response.send_message('**Erreur** · Vous devez être présent sur le serveur', ephemeral=True)
+            return await interaction.response.send_message('**Membre inconnu** · Vous devez être présent sur le serveur', ephemeral=True)
         
         trs = Transaction.from_id(self, interaction.guild, transaction_id)
         if not trs:
-            return await interaction.response.send_message('**Erreur** · Cette transaction n\'existe pas', ephemeral=True)
+            return await interaction.response.send_message('**Introuvable** · Cette transaction n\'existe pas', ephemeral=True)
         
         await interaction.response.defer()
         view = ConfirmationView()
@@ -799,36 +808,38 @@ class Economy(commands.Cog):
         """
         guild = interaction.guild
         if not isinstance(guild, discord.Guild):
-            return await interaction.response.send_message('**Erreur** · Vous devez être présent sur le serveur', ephemeral=True)
+            return await interaction.response.send_message('**Membre inconnu** · Vous devez être présent sur le serveur', ephemeral=True)
         
         # On vérifie que le symbole soit valide (unicode)
         if not currency.isprintable() or currency.isspace():
-            return await interaction.response.send_message('**Erreur** · Le symbole de la monnaie doit être un caractère unicode non-vide et imprimable', ephemeral=True)
+            return await interaction.response.send_message('**Invalide** · Le symbole de la monnaie doit être un caractère unicode non-vide et imprimable', ephemeral=True)
         
         if len(currency) > 3:
-            return await interaction.response.send_message('**Erreur** · Le symbole de la monnaie ne peut pas dépasser 3 caractères', ephemeral=True)
+            return await interaction.response.send_message('**Invalide** · Le symbole de la monnaie ne peut pas dépasser 3 caractères', ephemeral=True)
         
         self.set_guild_config(guild, 'Currency', currency)
         await interaction.response.send_message(f"**Paramètre modifié** · Le symbole de la monnaie a été modifié pour `{currency}`")
         
     @config_commands.command(name='daily')
     @app_commands.rename(amount='montant', limit='limite')
-    async def _configbank_daily(self, interaction: discord.Interaction, amount: app_commands.Range[int, 0], limit: app_commands.Range[int, 0]):
+    async def _configbank_daily(self, interaction: discord.Interaction, amount: app_commands.Range[int, 0], limit: app_commands.Range[int, 0], premium: app_commands.Range[int, 0]):
         """Modifie les paramètres de l'aide économique quotidienne (0 pour désactiver)
 
         :param amount: Montant de l'aide quotidienne
         :param limit: Limite de solde pour recevoir l'aide quotidienne
+        :param premium: Majoration de l'aide quotidienne pour les boosters du serveur
         """
         guild = interaction.guild
         if not isinstance(guild, discord.Guild):
-            return await interaction.response.send_message('**Erreur** · Vous devez être présent sur le serveur', ephemeral=True)
+            return await interaction.response.send_message('**Membre inconnu** · Vous devez être présent sur le serveur', ephemeral=True)
         
         self.set_guild_config(guild, 'DailyAmount', amount)
         self.set_guild_config(guild, 'DailyLimit', limit)
+        self.set_guild_config(guild, 'PremiumDailyAmount', premium)
         if amount == 0 or limit == 0:
             await interaction.response.send_message(f"**Paramètres modifiés** · L'aide économique quotidienne a été désactivée")
         else:
-            await interaction.response.send_message(f"**Paramètres modifiés** · L'aide économique quotidienne a été modifiée pour `{amount}{self.get_currency(guild)}` avec une limite de `{limit}{self.get_currency(guild)}`")
+            await interaction.response.send_message(f"**Paramètres modifiés** · L'aide économique quotidienne a été modifiée pour `{amount}{self.get_currency(guild)}` avec une limite de `{limit}{self.get_currency(guild)}` et une majoration de `{premium}{self.get_currency(guild)}` pour les boosters du serveur")
     
     @config_commands.command(name='defaultbalance')
     @app_commands.rename(amount='montant')
@@ -839,7 +850,7 @@ class Economy(commands.Cog):
         """
         guild = interaction.guild
         if not isinstance(guild, discord.Guild):
-            return await interaction.response.send_message('**Erreur** · Vous devez être présent sur le serveur', ephemeral=True)
+            return await interaction.response.send_message('**Membre inconnu** · Vous devez être présent sur le serveur', ephemeral=True)
         
         self.set_guild_config(guild, 'DefaultBalance', amount)
         await interaction.response.send_message(f"**Paramètre modifié** · Le solde par défaut a été modifié pour `{amount}{self.get_currency(guild)}`")

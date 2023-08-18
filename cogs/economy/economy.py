@@ -684,7 +684,7 @@ class Economy(commands.Cog):
         trs = account.deposit(dailyamount, reason=f'Aide quotidienne du {today}')
         cond.value = today
         if is_premium:
-            return await interaction.response.send_message(f"**Aide quotidienne récupérée** · **{trs.display_amount}** ont été ajoutés à votre compte au titre de l'aide économique quotidienn (majorée car vous boostez ce serveur)")
+            return await interaction.response.send_message(f"**Aide quotidienne récupérée** · **{trs.display_amount}** ont été ajoutés à votre compte au titre de l'aide économique quotidienne (**majorée** car vous boostez ce serveur)")
         await interaction.response.send_message(f"**Aide quotidienne récupérée** · **{trs.display_amount}** ont été ajoutés à votre compte au titre de l'aide économique quotidienne")
     
     @app_commands.command(name='leaderboard')

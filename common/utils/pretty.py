@@ -2,21 +2,25 @@
 from typing import Union
 from datetime import datetime, timedelta
 
-def bar_chart(value: int, max_value: int, char_value: int = 1, use_half_bar: bool = True) -> str:
-    """Crée une barre en ASCII représentant une progression ou une proportion
+def bar_chart(value: int | float, total: int | float, *, lenght: int = 10, use_half_bar: bool = True, display_percent: bool = False) -> str:
+    """Retourne un diagramme en barres
 
     :param value: Valeur à représenter
-    :param max_value: Limite haute que peut prendre la barre
-    :param char_value: La valeur en % représentée par un seul caractère
-    :param use_half_bar: S'il faut utiliser une demie-barre pour représenter un reste
-    :returns: str
+    :param total: Valeur maximale possible
+    :param lenght: Longueur du diagramme, par défaut 10 caractères
+    :param use_half_bar: S'il faut utiliser des demi-barres pour les valeurs intermédiaires, par défaut True
+    :param display_percent: S'il faut afficher le pourcentage en fin de barre, par défaut False
+    :return: str
     """
-    if max_value == 0:
+    if total == 0:
         return ' '
-    nb_bars = (value / max_value) * 100 / char_value
+    percent = (value / total) * 100
+    nb_bars = percent / (100 / lenght)
     bars = '█' * int(nb_bars)
-    if not nb_bars.is_integer() and use_half_bar:
+    if (nb_bars % 1) >= 0.5 and use_half_bar:
         bars += '▌'
+    if display_percent:
+        bars += f' {round(percent)}%'
     return bars
 
 def troncate_text(text: str, length: int, add_ellipsis: bool = True) -> str:

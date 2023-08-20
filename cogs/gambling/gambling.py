@@ -183,7 +183,9 @@ class Gambling(commands.Cog):
         # On récupère les gagnants
         winners = [b for b in bets if b['choice'] == winner]
         if not winners:
-            return await channel.send(f"# Pari terminé · `{data['title']}`\nPersonne n'a parié sur `{winner.capitalize()}` ! Il n'y a donc pas de gagnant.", embed=self.get_betting_embed(channel, highlight_result=winner))
+            embed = self.get_betting_embed(channel, highlight_result=winner)
+            embed.set_author(name="Pari terminé · Résultats")
+            return await channel.send(f"# Pari terminé · `{data['title']}`\nPersonne n'a parié sur `{winner.capitalize()}` ! Il n'y a donc pas de gagnant.\n### Résultats", embed=embed)
 
         embed = self.get_betting_embed(channel, highlight_result=winner)
         embed.set_author(name="Pari terminé · Résultats")

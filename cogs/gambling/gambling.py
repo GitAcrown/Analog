@@ -183,9 +183,9 @@ class Gambling(commands.Cog):
         # On récupère les gagnants
         winners = [b for b in bets if b['choice'] == winner]
         if not winners:
-            return await channel.send(f"**Aucun gagnant** · Personne n'a parié sur `{winner.capitalize()}` !")
+            return await channel.send(f"# Pari terminé · `{data['title']}`\nPersonne n'a parié sur `{winner.capitalize()}` ! Il n'y a donc pas de gagnant.", embed=self.get_betting_embed(channel, highlight_result=winner))
 
-        embed = self.get_betting_embed(channel)
+        embed = self.get_betting_embed(channel, highlight_result=winner)
         embed.set_author(name="Pari terminé · Résultats")
         
         # On distribue les gains
@@ -209,21 +209,21 @@ class Gambling(commands.Cog):
        
     # DISPLAY ----------------------------------------------------------------
     
-    def get_betting_embed(self, channel: discord.TextChannel | discord.Thread, *, highlight: str | None = None) -> discord.Embed:
+    def get_betting_embed(self, channel: discord.TextChannel | discord.Thread, *, highlight_result: str | None = None) -> discord.Embed:
         """Renvoie un embed avec les informations du pari mis à jour."""
         data = self.get_betting(channel)
         if not data:
             raise ValueError(f"Le pari n'existe pas.")
         
         embed = discord.Embed(title=data['title'], color=0x2b2d31)
-        embed.set_author(name="Pari en cours")
+        embed.set_author(name="Pari en cours" if not highlight_result else "Pari terminé")
         bets = self.get_bets(channel)
         table = []
         choices = data['choices'].split(',')
         if not bets:
             for choice in choices:
-                if highlight:
-                    if highlight == choice:
+                if highlight_result:
+                    if highlight_result == choice:
                         table.append(('+' + choice.capitalize(), 0, ''))
                     else:
                         table.append(('-' + choice.capitalize(), 0, ''))
@@ -235,8 +235,8 @@ class Gambling(commands.Cog):
                 amount = sum([b['amount'] for b in bets if b['choice'] == choice])
                 prc = amount / total * 100 if total else 0
                 bar = pretty.bar_chart(amount, total, 10) + f' {round(prc)}%'
-                if highlight:
-                    if highlight == choice:
+                if highlight_result:
+                    if highlight_result == choice:
                         table.append(('+' + choice.capitalize(), amount, bar))
                     else:
                         table.append(('-' + choice.capitalize(), amount, bar))
@@ -259,13 +259,16 @@ class Gambling(commands.Cog):
             embed.set_footer(text="Pariez avec /bet", icon_url=avatar)
         return embed
     
-    async def update_display(self, channel: discord.TextChannel | discord.Thread):
+    async def update_display(self, channel: discord.TextChannel | discord.Thread, result: str | None = None):
         """Met à jour l'affichage du pari."""
         data = self.get_betting(channel)
         if not data:
             raise ValueError(f"Le pari n'existe pas.")
         
-        embed = self.get_betting_embed(channel)
+        if result:
+            embed = self.get_betting_embed(channel, highlight_result=result)
+        else:
+            embed = self.get_betting_embed(channel)
         message = await channel.fetch_message(data['message_id'])
         await message.edit(embed=embed, content=None)
         

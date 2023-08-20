@@ -300,7 +300,14 @@ class Gambling(commands.Cog):
         self.set_betting(channel, title, chx, message, minimal_bet, interaction.user)
         
         await self.update_display(channel)
-        await interaction.response.send_message(f"**Pari créé** · Le pari a été créé sur ce salon.\nVous pouvez parier avec `/bet`.", ephemeral=True)
+        
+        alert = ""
+        try:
+            await message.pin()
+        except discord.HTTPException:
+            alert = "\n**Attention** · Je n'ai pas pu épingler le message du pari. Assurez-vous que j'ai la permission `Gérer les messages` sur ce salon et qu'il n'y a pas déjà 50 messages d'épinglés."
+            
+        await interaction.response.send_message(f"**Pari créé** · Le pari a été créé sur ce salon.\nVous pouvez parier avec `/bet`.{alert}", ephemeral=True)
 
     @gamble_commands.command(name='stop')
     @app_commands.rename(result='résultat')
@@ -336,12 +343,22 @@ class Gambling(commands.Cog):
         if result.lower() not in betting['choices'].split(','):
             return await interaction.followup.send(f"**Résultat invalide** · Le résultat `{result}` n'existe pas.", ephemeral=True)
         
+        alert = ""
+        bet_message = await channel.fetch_message(betting['message_id'])
+        if not bet_message:
+            pass
+        elif bet_message.pinned:
+            try:
+                await bet_message.unpin()
+            except discord.HTTPException:
+                alert = "\n**Attention** · Je n'ai pas pu désépingler le message du pari. Assurez-vous que j'ai la permission `Gérer les messages` sur ce salon."
+        
         await self.handle_winners(channel, result)
         self.delete_betting(channel)
         self.delete_all_bets(channel)
         await interaction.delete_original_response()
         
-        await interaction.followup.send(content=f"**Pari arrêté** · Le pari a été arrêté sur ce salon.", ephemeral=True)
+        await interaction.followup.send(content=f"**Pari arrêté** · Le pari a été arrêté sur ce salon.{alert}", ephemeral=True)
         
     @gamble_commands.command(name='cancel')
     async def _cancel_gamble(self, interaction: discord.Interaction):

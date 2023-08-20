@@ -228,9 +228,9 @@ class Gambling(commands.Cog):
             for choice in choices:
                 if highlight_result:
                     if highlight_result == choice:
-                        table.append(('+' + choice.capitalize(), f'0{currency}', ''))
+                        table.append(('+ ' + choice.capitalize(), f'0{currency}', ''))
                     else:
-                        table.append(('-' + choice.capitalize(), f'0{currency}', ''))
+                        table.append(('- ' + choice.capitalize(), f'0{currency}', ''))
                 else:
                     table.append((choice.capitalize(), 0, ''))
         else:
@@ -241,9 +241,9 @@ class Gambling(commands.Cog):
                 bar = pretty.bar_chart(amount, total, 10) + f' {round(prc)}%'
                 if highlight_result:
                     if highlight_result == choice:
-                        table.append(('+' + choice.capitalize(), f'{amount}{currency}', bar))
+                        table.append(('+ ' + choice.capitalize(), f'{amount}{currency}', bar))
                     else:
-                        table.append(('-' + choice.capitalize(), f'{amount}{currency}', bar))
+                        table.append(('- ' + choice.capitalize(), f'{amount}{currency}', bar))
                 else:
                     table.append((choice.capitalize(), f'{amount}{currency}', bar))
                 

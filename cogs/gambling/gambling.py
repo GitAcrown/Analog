@@ -295,7 +295,7 @@ class Gambling(commands.Cog):
         if len(title) > 100:
             return await interaction.response.send_message("**Titre invalide** · Le titre ne peut pas dépasser 100 caractères.", ephemeral=True)
         
-        chx = [c.rstrip() for c in re.split(r'[,|;]', choices) if c]
+        chx = [c.strip().lower() for c in re.split(r'[,|;]', choices) if c]
         if len(chx) < 2 or len(chx) > 4:
             return await interaction.response.send_message("**Choix invalides** · Vous devez spécifier entre 2 et 4 choix possibles.", ephemeral=True)
         

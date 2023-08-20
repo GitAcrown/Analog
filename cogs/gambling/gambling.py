@@ -193,6 +193,7 @@ class Gambling(commands.Cog):
         # On distribue les gains
         table = []
         mentions = []
+        currency = self.economy.get_currency(channel.guild)
         winners = sorted(winners, key=lambda w: w['amount'], reverse=True)
         for winner in winners:
             member = channel.guild.get_member(winner['user_id'])
@@ -200,7 +201,7 @@ class Gambling(commands.Cog):
                 table.append((winner['user_id'], winner['amount']))
             else:
                 amount = int(winner['amount'] * total / winner['amount'])
-                table.append((str(member), amount))
+                table.append((str(member), f'+{amount}{currency}'))
                 account = self.economy.get_account(member)
                 account.deposit(amount, reason=f"Gains du pari {data['title']}")
                 mentions.append(member.mention)
@@ -217,6 +218,7 @@ class Gambling(commands.Cog):
         if not data:
             raise ValueError(f"Le pari n'existe pas.")
         
+        currency = self.economy.get_currency(channel.guild)
         embed = discord.Embed(title=data['title'], color=0x2b2d31)
         embed.set_author(name="Pari en cours" if not highlight_result else "Pari terminé")
         bets = self.get_bets(channel)
@@ -226,9 +228,9 @@ class Gambling(commands.Cog):
             for choice in choices:
                 if highlight_result:
                     if highlight_result == choice:
-                        table.append(('+' + choice.capitalize(), 0, ''))
+                        table.append(('+' + choice.capitalize(), f'0{currency}', ''))
                     else:
-                        table.append(('-' + choice.capitalize(), 0, ''))
+                        table.append(('-' + choice.capitalize(), f'0{currency}', ''))
                 else:
                     table.append((choice.capitalize(), 0, ''))
         else:
@@ -239,11 +241,11 @@ class Gambling(commands.Cog):
                 bar = pretty.bar_chart(amount, total, 10) + f' {round(prc)}%'
                 if highlight_result:
                     if highlight_result == choice:
-                        table.append(('+' + choice.capitalize(), amount, bar))
+                        table.append(('+' + choice.capitalize(), f'{amount}{currency}', bar))
                     else:
-                        table.append(('-' + choice.capitalize(), amount, bar))
+                        table.append(('-' + choice.capitalize(), f'{amount}{currency}', bar))
                 else:
-                    table.append((choice.capitalize(), amount, bar))
+                    table.append((choice.capitalize(), f'{amount}{currency}', bar))
                 
         embed.description = pretty.codeblock(tabulate(table, tablefmt='plain'), lang='diff')
         

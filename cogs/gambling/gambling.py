@@ -176,8 +176,9 @@ class Gambling(commands.Cog):
             return await channel.send(f"**Choix invalide** · Le choix `{winner}` n'existe pas.")
         
         # On calcule le total des mises
-        total = sum([b['amount'] for b in bets])
-        if not total:
+        total_w = sum([b['amount'] for b in bets if b['choice'] == winner])
+        total_full = sum([b['amount'] for b in bets])
+        if not total_full:
             return await channel.send(f"**Aucun pari** · Personne n'a parié sur ce pari.")
         
         # On récupère les gagnants
@@ -195,12 +196,13 @@ class Gambling(commands.Cog):
         mentions = []
         currency = self.economy.get_currency(channel.guild)
         winners = sorted(winners, key=lambda w: w['amount'], reverse=True)
-        for winner in winners:
-            member = channel.guild.get_member(winner['user_id'])
+        for w in winners:
+            member = channel.guild.get_member(w['user_id'])
+            # Les gains sont proportionnels à la mise de chaque gagnant
+            amount = round(w['amount'] / total_w * total_full)
             if not member:
-                table.append((winner['user_id'], winner['amount']))
+                table.append((w['user_id'], amount))
             else:
-                amount = int(winner['amount'] * total / winner['amount'])
                 table.append((str(member), f'+{amount}{currency}'))
                 account = self.economy.get_account(member)
                 account.deposit(amount, reason=f"Gains du pari {data['title']}")
@@ -220,7 +222,10 @@ class Gambling(commands.Cog):
         
         currency = self.economy.get_currency(channel.guild)
         embed = discord.Embed(title=data['title'], color=0x2b2d31)
-        embed.set_author(name="Pari en cours" if not highlight_result else "Pari terminé")
+        
+        author_text = f"Pari en cours" if not highlight_result else f"Pari terminé"
+        author_text += f" · {len(self.get_bets(channel))} parieur{'s' if len(self.get_bets(channel)) > 1 else ''}"
+        embed.set_author(name=author_text)
         bets = self.get_bets(channel)
         table = []
         choices = data['choices'].split(',')

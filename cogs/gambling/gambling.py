@@ -396,6 +396,8 @@ class Gambling(commands.Cog):
                     continue
                 account = self.economy.get_account(member)
                 account.deposit(bet['amount'], reason=f"Remboursement du pari {betting['title']}")
+        else:
+            return await interaction.followup.send(f"**Aucun pari** · Personne n'a parié sur ce pari.", ephemeral=True)
 
         self.delete_betting(channel)
         self.delete_all_bets(channel)

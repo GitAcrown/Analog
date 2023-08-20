@@ -242,7 +242,7 @@ class Gambling(commands.Cog):
             total = sum([b['amount'] for b in bets])
             for choice in choices:
                 amount = sum([b['amount'] for b in bets if b['choice'] == choice])
-                bar = pretty.bar_chart(amount, total, lenght=5, display_percent=True)
+                bar = pretty.bar_chart(amount, total, lenght=7, display_percent=True)
                 if highlight_result:
                     if highlight_result == choice:
                         table.append(('+ ' + choice.capitalize(), f'{amount}{currency}', bar))

@@ -321,6 +321,9 @@ class Gambling(commands.Cog):
         if len(chx) < 2 or len(chx) > 4:
             return await interaction.response.send_message("**Choix invalides** · Vous devez spécifier entre 2 et 4 choix possibles.", ephemeral=True)
         
+        if any([len(c) > 20 for c in chx]):
+            return await interaction.response.send_message("**Choix invalides** · Les choix ne peuvent pas dépasser 20 caractères.", ephemeral=True)
+        
         message = await channel.send("`⏳` **Chargement de l'affichage des résultats...**")
         self.set_betting(channel, title, chx, message, minimal_bet, interaction.user)
         

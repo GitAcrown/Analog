@@ -184,11 +184,11 @@ class Gambling(commands.Cog):
         # On récupère les gagnants
         winners = [b for b in bets if b['choice'] == winner]
         if not winners:
-            embed = self.get_betting_embed(channel, highlight_result=winner)
+            embed = self.get_betting_embed(channel, highlight_result=winner, display_members=False)
             embed.set_author(name="Pari terminé · Résultats")
             return await channel.send(f"# Pari terminé · `{data['title']}`\nPersonne n'a parié sur `{winner.capitalize()}` ! Il n'y a donc pas de gagnant.\n### Résultats", embed=embed)
 
-        embed = self.get_betting_embed(channel, highlight_result=winner)
+        embed = self.get_betting_embed(channel, highlight_result=winner, display_members=False)
         embed.set_author(name="Pari terminé · Résultats")
         
         # On distribue les gains
@@ -214,7 +214,7 @@ class Gambling(commands.Cog):
        
     # DISPLAY ----------------------------------------------------------------
     
-    def get_betting_embed(self, channel: discord.TextChannel | discord.Thread, *, highlight_result: str | None = None) -> discord.Embed:
+    def get_betting_embed(self, channel: discord.TextChannel | discord.Thread, *, highlight_result: str | None = None, display_members: bool = True) -> discord.Embed:
         """Renvoie un embed avec les informations du pari mis à jour."""
         data = self.get_betting(channel)
         if not data:
@@ -253,6 +253,19 @@ class Gambling(commands.Cog):
                     table.append((choice.capitalize(), f'{amount}{currency}', bar))
                 
         embed.description = pretty.codeblock(tabulate(table, tablefmt='plain'), lang='diff')
+        
+        # Afficher les participants
+        if bets and display_members:
+            parts = []
+            for bet in bets:
+                member = channel.guild.get_member(bet['user_id'])
+                if not member:
+                    parts.append((bet['user_id'], f'{bet["amount"]}{currency}'))
+                else:
+                    parts.append((str(member), f'{bet["amount"]}{currency}'))
+            
+            if parts:
+                embed.add_field(name="Participants", value=pretty.codeblock(tabulate(parts, headers=('Membre', 'Mise'))), inline=False)
         
         author = channel.guild.get_member(data['author_id'])
         if author:

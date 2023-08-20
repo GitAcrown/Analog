@@ -192,14 +192,13 @@ class Account:
         """Modifie le solde du compte"""
         if value < 0:
             raise ValueError('Le solde du compte ne peut pas être négatif')
+        if type(value) != int:
+            value = round(value)
         
         return self._set_balance(value, reason=reason)
     
     def deposit(self, amount: int, *, reason: str = '') -> 'Transaction':
         """Ajoute de l'argent au compte"""
-        if amount < 0:
-            raise ValueError('Le montant ne peut pas être négatif')
-        
         return self._set_balance(self._get_balance() + amount, reason=reason)
     
     def withdraw(self, amount: int, *, reason: str = '') -> 'Transaction':

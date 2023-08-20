@@ -221,7 +221,7 @@ class Gambling(commands.Cog):
             raise ValueError(f"Le pari n'existe pas.")
         
         currency = self.economy.get_currency(channel.guild)
-        embed = discord.Embed(title=data['title'], color=0x2b2d31)
+        embed = discord.Embed(color=0x2b2d31)
         
         author_text = f"Pari en cours" if not highlight_result else f"Pari terminé"
         author_text += f" · {len(self.get_bets(channel))} parieur{'s' if len(self.get_bets(channel)) > 1 else ''}"
@@ -252,7 +252,7 @@ class Gambling(commands.Cog):
                 else:
                     table.append((choice.capitalize(), f'{amount}{currency}', bar))
                 
-        embed.description = pretty.codeblock(tabulate(table, tablefmt='plain'), lang='diff')
+        embed.description = f"# *`{data['title']}`*\n" + pretty.codeblock(tabulate(table, tablefmt='plain'), lang='diff')
         
         # Afficher les participants
         if bets and display_members:
@@ -265,7 +265,7 @@ class Gambling(commands.Cog):
                     parts.append((str(member), f'{bet["amount"]}{currency}'))
             
             if parts:
-                embed.add_field(name="Participants", value=pretty.codeblock(tabulate(parts, headers=('Membre', 'Mise'))), inline=False)
+                embed.add_field(name="Participants", value=pretty.codeblock(tabulate(parts, tablefmt='plain')), inline=False)
         
         author = channel.guild.get_member(data['author_id'])
         if author:

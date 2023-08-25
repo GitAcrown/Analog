@@ -1,21 +1,15 @@
-from email.base64mime import header_encode
-import enum
-import json
 import logging
 import random
 import re
-from typing import Any, Dict, Optional
-import comm
+from typing import Any
 
 import discord
 from discord import app_commands
 from discord.ext import commands
-from discord.interactions import Interaction
 from tabulate import tabulate
 
-from cogs.economy.economy import Economy
 from common import dataio
-from common.utils import fuzzy, pretty
+from common.utils import pretty
 
 logger = logging.getLogger(f'Analog.{__name__.capitalize()}')
 

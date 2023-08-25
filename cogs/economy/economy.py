@@ -166,6 +166,9 @@ class Account:
         else:
             return False
         
+    def __hash__(self):
+        return hash(self.owner)
+        
     def __create_if_not_exists(self):
         self.__cog.data.execute(self.guild, "INSERT OR IGNORE INTO accounts VALUES (?, ?)", (self.owner.id, int(self.__cog.get_guild_config(self.guild)['DefaultBalance'])))
         

@@ -109,10 +109,11 @@ class ThrowTransformer(app_commands.Transformer):
                 for _ in range(int(n)):
                     dices.append(ClassicDice(int(f)))
             # Les dés personnalisés sont sous la forme Nd(F1,F2,FN...)
-            elif re.match(r'^(\d+)?d\(\d+(,\d+)*\)$', dice):
+            elif re.match(r'^(\d+)?d\(\d+(,\s?\d+)*\)$', dice):
                 n, f = dice.split('d')
                 if not n:
                     n = 1
+                faces = f[1:-1].split(',')
                 faces = [int(f.strip()) for f in f[1:-1].split(',')]
                 for _ in range(int(n)):
                     dices.append(Dice(faces))

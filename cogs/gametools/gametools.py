@@ -74,8 +74,8 @@ class DiceThrow:
                 dices[d] += 1
             else:
                 dices[d] = 1
-                
-        return ' + '.join([f'{dices[d]}{str(d)}' for d in dices])
+             
+        return ' + '.join([f"{dices[d] if dices[d] > 1 else ''}{str(d)}" for d in dices])
     
     # SERIALIZATION -----------------------------------------------------------
     
@@ -102,15 +102,19 @@ class ThrowTransformer(app_commands.Transformer):
         string = [v.strip() for v in value.split('+')]
         for dice in string:
             # Les dés classiques sont sous la forme NdF 
-            if re.match(r'^\d+d\d+$', dice):
+            if re.match(r'^(\d+)?d\d+$', dice):
                 n, f = dice.split('d')
-                for _ in range(int(n) or 1):
+                if not n:
+                    n = 1
+                for _ in range(int(n)):
                     dices.append(ClassicDice(int(f)))
             # Les dés personnalisés sont sous la forme Nd(F1,F2,FN...)
-            elif re.match(r'^\d+d\(\d+(,\d+)*\)$', dice):
+            elif re.match(r'^(\d+)?d\(\d+(,\d+)*\)$', dice):
                 n, f = dice.split('d')
+                if not n:
+                    n = 1
                 faces = [int(f.strip()) for f in f[1:-1].split(',')]
-                for _ in range(int(n) or 1):
+                for _ in range(int(n)):
                     dices.append(Dice(faces))
             else:
                 await interaction.response.send_message(f"**Invalide** · Les dés doivent être au format NdF ou Nd(F1,F2,FN...) et séparés par des '+'")

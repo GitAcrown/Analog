@@ -199,8 +199,8 @@ class GameTools(commands.Cog):
         :param dices: Dés à lancer (format NdF ou Nd(F1,F2,FN...))
         """
         rolls = []
-        for i, d in enumerate(dices.dices):
-            rolls.append((f'{i + 1}.', str(d), d.roll()))
+        for d in dices.dices:
+            rolls.append((str(d), d.roll()))
         text = pretty.codeblock(tabulate(rolls, tablefmt='plain'))
         em = discord.Embed(description=f"# `🎲 {dices}`\n{text}")
         await interaction.response.send_message(embed=em)

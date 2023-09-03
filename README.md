@@ -1,4 +1,4 @@
-# Analog
+# Apollo
 Bot Discord francophone de minijeux
 
 ### Support et développement
